@@ -1,4 +1,4 @@
-# MILMED Connect — Deployment & API Keys
+# MilMed Connect PitchBook — Deployment & API Keys
 
 ## Target machine: MILMED Connect iMac
 
