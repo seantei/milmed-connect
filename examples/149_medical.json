@@ -1,0 +1,30 @@
+{
+  "company_id": "mtec-149-medical",
+  "name": "149 Medical",
+  "slug": "149-medical",
+  "source_profiles": {
+    "mtec": "https://mtec-sc.org/life-sciences/149-medical"
+  },
+  "description": "149 Medical is dedicated to improving outcomes for premature infants through innovative, life-changing technology. Primary focus: reducing morbidity and mortality by providing continuous, real-time monitoring of cerebral blood flow to detect and mitigate risks such as ventricular hemorrhage. Flagship device: NIRDS1, a non-invasive intracranial blood flow sensor validated in over 1,000 children, currently in clinical evaluation, licensed exclusively from Massachusetts General Hospital.",
+  "location": "17 Briden Street, Worcester, MA 01605",
+  "website": "https://149medical.com",
+  "email": "info@149medical.com",
+  "employee_count": "small (1-50)",
+  "industries": ["health-care", "health-diagnostics", "medical-device"],
+  "products": ["Continuous non-invasive cerebral blood flow monitor (clinical prototype) — clinical-stage, non-invasive optical monitoring system for real-time cerebral blood flow measurement in premature infants; early warning of intraventricular hemorrhage risk"],
+  "expertise_areas": ["Neurophotonics and optical brain monitoring", "Neonatal clinical monitoring and NICU study conduct", "Medical device design and commercialization", "Clinical validation and comparative physiological testing", "Regulatory affairs and quality systems for medical devices", "Signal processing and algorithm development for physiological signals"],
+  "key_technologies": ["Diffuse correlation spectroscopy (DCS)", "Near-infrared spectroscopy (NIRS) principles", "Laser speckle / speckle contrast optical sensing", "Coherent light optical probe hardware", "Real-time signal processing and blood flow estimation algorithms", "Continuous bedside cerebral hemodynamics monitoring"],
+  "publications": ["Validation of Diffuse Correlation Spectroscopy Measures of Critical Closing Pressure against Transcranial Doppler Ultrasound in Stroke Patients (Wu et al., 2021)", "Validation of DCS against 15O-water PET for Regional Cerebral Blood Flow Measurement in Neonatal Piglets (Giovanella et al., 2020)", "Cerebral Hemodynamics in Preterm Infants During Positional Intervention (Buckley et al., 2009)"],
+  "expected_scores": {
+    "combat_casualty_care": 55,
+    "military_operational_medicine": 60,
+    "medical_simulation_info_sciences": 40,
+    "military_infectious_diseases": 10,
+    "clinical_rehabilitative_medicine": 50,
+    "chemical_biological_threat_reduction": 5,
+    "dual_use_score": 45,
+    "regulatory_score": 50,
+    "team_score": 40,
+    "notes": "Strong operational medicine (environmental/physiologic monitoring) and clinical rehab fit. Civilian NICU market is the dual-use proof. Not a combat trauma play — hemorrhage here is intracranial, not battlefield. Low infectious disease relevance. Good example of a company that scores well on operational medicine but would be missed by a hemorrhage-keyword search."
+  }
+}
