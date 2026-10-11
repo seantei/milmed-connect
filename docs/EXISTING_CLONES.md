@@ -1,12 +1,12 @@
 # Existing Open-Source PitchBook Clones — Integration Assessment
 
-Two real open-source PitchBook-style projects exist on GitHub. Here's what each does, what milmed-connect can borrow from them, and the honest verdict on integration.
+Two real open-source PitchBook-style projects exist on GitHub. Here's what each does, what MilMed Connect PitchBook can borrow from them, and the honest verdict on integration.
 
 ## OpenPitch (github.com/Avierovich/openpitch) — MIT, ~10 stars, v0.1.3
 
 **What it is:** An open, real-time intelligence layer for AI startups. Mines podcasts, news, and SEC EDGAR filings; extracts metrics with LLMs; reconciles conflicting sources into consensus ranges with confidence scores and contradiction flags; publishes daily via GitHub Actions. Ships an MCP server, a static dashboard, and an event feed. No API key needed — the data is committed to the repo as plain JSON.
 
-**What milmed-connect can borrow:**
+**What MilMed Connect PitchBook can borrow:**
 
 - **Confidence-scored, sourced figures** — every number carries its source, a confidence score, and a tracked history. This is the right trust model for dual-use discovery: Eric and Kirtly should see *why* a company scored 84, not just the number.
 - **Contradiction detection** — when sources disagree, surface a consensus range + flag, don't silently pick one. Already planned in our LLM scoring layer; OpenPitch proves the pattern works.
@@ -20,7 +20,7 @@ Two real open-source PitchBook-style projects exist on GitHub. Here's what each 
 
 **What it is:** An open-source database of venture capital *firms* and their investors, built on Dolt (git for databases). Scrapes firm websites, categorizes pages with LLMs, stores team members with contact info. Queryable via SQL. Focused on helping founders find the right VC to pitch.
 
-**What milmed-connect can borrow:**
+**What MilMed Connect PitchBook can borrow:**
 
 - **LLM-assisted web scraping** — converting raw HTML to simplified markdown, then extracting structured JSON with an LLM. This is a proven pattern for sites without APIs (relevant to CDMRP and TechLink scraping).
 - **Dolt as a database** — git-versioned data with branching and PRs for corrections. Interesting for the entity-resolution review queue: a human could review a borderline match as a Dolt PR.
@@ -39,10 +39,10 @@ Neither repo contains data or code that maps to MTEC, SBIR, CDMRP, USAspending, 
 
 ## Optional: run OpenPitch alongside as a complement
 
-One legitimate option: add OpenPitch's MCP server as a *second* MCP server on the iMac, alongside milmed-connect's. Eric's agent could then query both — milmed-connect for dual-use medtech discovery, OpenPitch for the broader AI startup landscape. They don't conflict; they cover different universes. This is a one-line MCP config addition, not a code integration.
+One legitimate option: add OpenPitch's MCP server as a *second* MCP server on the iMac, alongside MilMed Connect PitchBook's. Eric's agent could then query both — MilMed Connect PitchBook for dual-use medtech discovery, OpenPitch for the broader AI startup landscape. They don't conflict; they cover different universes. This is a one-line MCP config addition, not a code integration.
 
 ## What to avoid
 
-- Do not fork OpenPitch or OpenBook into milmed-connect. Different data, different domain, different architecture (OpenPitch is GitHub-Actions-centric; we are iMac-local).
+- Do not fork OpenPitch or OpenBook into MilMed Connect PitchBook. Different data, different domain, different architecture (OpenPitch is GitHub-Actions-centric; we are iMac-local).
 - Do not copy their data files. OpenPitch's committed JSON is AI-startup claims; importing it would pollute the medtech database.
 - Do not adopt Dolt as the primary database. Postgres 16 is already the stack; Dolt adds operational complexity for no gain at our scale (13.5k orgs, not millions).
