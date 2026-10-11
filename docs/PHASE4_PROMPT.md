@@ -1,6 +1,6 @@
-# Phase 4 Prompt — Differentiation Layer
+# MilMed Connect PitchBook — Phase 4 Prompt — Differentiation Layer
 
-Build Phase 4 of milmed-connect from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 3 branch. No Docker — everything stays local on the MILMED Connect iMac with the existing Postgres and Redis. API keys continue to be discovered from existing machine storage (.env → shell profile → macOS Keychain) via api/config.py.
+Build Phase 4 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 3 branch. No Docker — everything stays local on the MILMED Connect iMac with the existing Postgres and Redis. API keys continue to be discovered from existing machine storage (.env → shell profile → macOS Keychain) via api/config.py.
 
 ## Goals
 
