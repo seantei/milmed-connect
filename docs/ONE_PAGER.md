@@ -1,4 +1,4 @@
-# MILMED Connect — One-Pager
+# MilMed Connect PitchBook — One-Pager
 
 ## The problem
 
@@ -14,7 +14,7 @@ A company doing AI triage or wearable sensors might appear in three of these and
 
 ## The solution
 
-**MILMED Connect** — a PitchBook-style intelligence platform for dual-use medical technology, built entirely on public DoD sources. Free, open-source, self-hostable, MCP-native.
+**MilMed Connect PitchBook** — a PitchBook-style intelligence platform for dual-use medical technology, built entirely on public DoD sources. Free, open-source, self-hostable, MCP-native.
 
 - **One search layer** over all sources, with entity resolution merging the same company across MTEC, SBIR, and USAspending into a single profile.
 - **Dual-use scoring engine** rating every company on MTEC focus-area fit (combat casualty care, operational medicine, infectious diseases, etc.), civilian traction, FDA status, and team readiness — with cited evidence and contradiction flags.
