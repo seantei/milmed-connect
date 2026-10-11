@@ -1,4 +1,4 @@
-# API Key Discovery Check — Run on the MILMED iMac
+# MilMed Connect PitchBook — API Key Discovery Check — Run on the MILMED iMac
 
 Before starting Phase 2, run this check on the MILMED Connect iMac to confirm which API keys the platform will actually find. It tells you whether Phase 2 starts with the LLM layer, the Jev layer, or rule-based scoring only.
 
