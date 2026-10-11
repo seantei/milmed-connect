@@ -29,9 +29,9 @@ The same company appears under different names across sources:
    - Award co-occurrence (weight 0.15)
    - Personnel name overlap (weight 0.1)
 
-4. **Cluster**: connected components on pairs above threshold (0.85 auto-merge; 0.7–0.85 → review queue)
+4. **Cluster**: connected components on pairs above the threshold agreed in Phase 0 (recorded in `docs/phase0/SCORING_AGREEMENT.md` or a dedicated matching-agreement file). Support undoing merges. Borderline pairs go to human review.
 
-5. **LLM adjudication** for borderline: pass both profiles + context, ask match/no-match + rationale.
+5. **Optional AI adjudication** for borderline cases only if an approved usable AI provider is enabled. Otherwise human review only.
 
 ## Libraries
 
@@ -44,6 +44,7 @@ The same company appears under different names across sources:
 
 ## Evaluation
 
-- Hand-label 200 pairs as ground truth
-- Track precision/recall/F1 per source pair
-- Target: >95% precision on auto-merges
+- Hand-label 200 pairs as ground truth (created and approved in Phase 0)
+- Track precision/recall/F1 per source pair, with sample size and uncertainty
+- Auto-merge precision target agreed with Eric and Kirtly in Phase 0
+- Known company pairs that must never merge are listed in the Phase 0 agreement
