@@ -1,59 +1,47 @@
-# MilMed Connect PitchBook — Prompt Runbook — Order of Operations
+# MilMed Connect PitchBook — Prompt Runbook
 
-Run these in order. Each prompt is a separate session with your Grok bot. Wait for the PR to merge before starting the next.
+**Authoritative steps are in docs/INSTRUCTIONS.md.** This file is a short checklist.
 
-## Step 0 — API key discovery check (run on the iMac, not the bot)
+Run these in order. Each bot session is fresh. Wait for the PR to merge and human review before starting the next phase.
 
-**When:** Before anything else. Takes two minutes.
+## Step 0 — Foundations (on the iMac + with Eric and Kirtly)
 
-**Where:** Terminal on the MILMED Connect iMac, from the repo root.
+**When:** Before any bot session.
 
-**What:** Follow docs/API_KEY_CHECK.md — run the inline Python script (or `python -m api.config_check` once Phase 1 builds it). It reports which source supplies each key (Anthropic, OpenAI, Jev) without printing values, and tells you which Phase 2 layers can start immediately.
+**What:** Follow Step 0 in docs/INSTRUCTIONS.md. Verify source access, agree on scoring, approve three demo questions with expected answers, create labeled sets, document hardware. Optional: run the key check from docs/API_KEY_CHECK.md.
 
-**Why first:** The result determines whether Phase 2 starts with the LLM layer, the Jev layer, both, or rule-based only. Knowing this before building saves rework.
+**Done when:** Approved Phase 0 artifacts exist in named files (schema, scoring contract, source findings, demo questions/answers, labeled datasets). Human approval recorded.
 
-## Step 1 — Phase 1 prompt
+## Step 1 — Phase 1 (thin end-to-end)
 
-**When:** After Step 0.
+**When:** After Step 0 artifacts are approved.
 
-**Where:** Paste into your Grok bot as the opening prompt of a fresh session.
+**What:** Paste the Phase 1 prompt from docs/INSTRUCTIONS.md. Bot must read Phase 0 artifacts first and stop if any are missing.
 
-**What:** The Phase 1 prompt from the conversation (MTEC crawler, SBIR.gov pull, schema, Splink dedup, rule-based scoring, FastAPI endpoints, API key discovery wired in api/config.py). No LLM, no Jev.
+**Done when:** PR opened. Two sources ingested, search returns results with evidence links, conservative matching passes held-out set, backup restoration demonstrated. Eric and Kirtly see a useful result.
 
-**Done when:** PR opened, all 13.5k MTEC profiles in Postgres, SBIR awards pulled, search API responding.
+## Step 2 — Phase 2 (improve against feedback)
 
-## Step 2 — Phase 2 prompt
+**When:** After Phase 1 merges and feedback is incorporated.
 
-**When:** After Phase 1's PR merges.
+**What:** Paste the Phase 2 prompt from docs/INSTRUCTIONS.md.
 
-**What:** The Phase 2 prompt (Jev scoring layer, LLM scoring with evidence citations, USAspending + CDMRP ingestion, cross-source Splink, company profile pages). Jev degrades gracefully if no key found; LLM layer activates only if an Anthropic/OpenAI key was found in Step 0.
+**Done when:** Rules-only path passes all core tests. If an approved usable AI provider is enabled, its evaluation also meets the agreed criteria; otherwise it is explicitly marked disabled. Demo questions answer with cited evidence. No double-counting of awards.
 
-**Done when:** PR opened, both scoring layers calibrated against the 50 hand-labeled companies, cross-source matches visible.
+## Step 3 — Phase 3 (platform and formal demo)
 
-## Step 3 — Phase 3 prompt
+**When:** After Phase 2 merges.
 
-**When:** After Phase 2's PR merges.
+**What:** Paste the Phase 3 prompt from docs/INSTRUCTIONS.md (or docs/PHASE3_PROMPT.md if updated).
 
-**What:** The Phase 3 prompt from docs/PHASE3_PROMPT.md (MCP server with six tools, React dashboard, daily cron refresh on the iMac, email/Slack alerts, review queue).
+**Done when:** Formal demo prepared. Bot opens PR. Eric and Kirtly approve usefulness — the bot does not declare the meeting delivered on their behalf.
 
-**Done when:** PR opened, all three demo queries answer in under five seconds through both dashboard and MCP.
+## Step 4 — Extension (separately estimated)
 
-## Step 4 — Phase 4 prompt
-
-**When:** After Phase 3's PR merges.
-
-**What:** The Phase 4 prompt from docs/PHASE4_PROMPT.md (TechLink ingestion with company matching, relationship graph, proposal-language generator, performance pass, exports, backup cron).
-
-**Done when:** PR opened, TechLink matches surfaced, graph view renders, proposal drafts reviewable.
-
-## Step 5 — Demo
-
-**When:** After Phase 4 merges.
-
-**What:** Walk Eric and Kirtly through the three demo queries, the one-pager (docs/ONE_PAGER.md), and the relationship graph. The pitch: this replaces $20k+/year of PitchBook for military-medical coverage, runs locally on their iMac, and answers cross-source questions in seconds.
+Only after the core product proves useful. See docs/INSTRUCTIONS.md.
 
 ## Notes
 
-- Each phase prompt is also saved in the repo: docs/PHASE3_PROMPT.md, docs/PHASE4_PROMPT.md, docs/API_KEY_CHECK.md.
-- If a phase's PR has review comments, address them in the same bot session before moving on.
-- The API key check (Step 0) is the only step that runs on the iMac directly rather than through the bot.
+- Every phase prompt must include: "Read the approved Phase 0 artifacts first. If required artifacts or human approvals are missing, report the missing items and stop; do not invent approvals or labels."
+- AI scoring is optional. The rules-only path must always work.
+- See docs/BUILD_PLAN.md for full acceptance criteria.
