@@ -1,8 +1,10 @@
-# MILMED Connect
+# README
+
+# MilMed Connect PitchBook
 
 **A PitchBook-style intelligence platform for dual-use medical technology — built entirely on public DoD sources, installed locally on the MILMED Connect iMac.**
 
-MILMED Connect aggregates, scores, and surfaces dual-use medtech companies across the fragmented landscape of military medical funding: MTEC, SBIR/STTR, CDMRP, USAspending, TechLink, DIU, and more. Think PitchBook, but for the military medical innovation ecosystem — free, open-source, self-hostable, and MCP-native so AI agents can query it directly.
+MilMed Connect PitchBook aggregates, scores, and surfaces dual-use medtech companies across the fragmented landscape of military medical funding: MTEC, SBIR/STTR, CDMRP, USAspending, TechLink, DIU, and more. Think PitchBook, but for the military medical innovation ecosystem — free, open-source, self-hostable, and MCP-native so AI agents can query it directly.
 
 ## Why this exists
 
@@ -155,7 +157,6 @@ Jev (TypeSafe AI's System One decision model) handles high-volume, low-reasoning
 
 ### Phase 4 — Differentiation
 - [ ] TechLink technology-to-company matching
-- [ ] DIU Digital OnRamp integration
 - [ ] Relationship graph: companies ↔ DoD PIs ↔ labs ↔ programs
 - [ ] Proposal-language generator for MTEC solicitations
 
@@ -182,4 +183,4 @@ MIT. Data sourced from public U.S. government sources.
 
 ---
 
-*Built to show MILMED Connect (Beaverton, OR) what a unified dual-use medtech discovery layer could look like. Full deployment guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). One-pager: [docs/ONE_PAGER.md](docs/ONE_PAGER.md). Build plan: [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md).*
+*Built to show MILMED Connect (Beaverton, OR) what a unified dual-use medtech discovery layer could look like. Full deployment guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). One-pager: [docs/ONE_PAGER.md](docs/ONE_PAGER.md). Build plan: [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md). Master prompt: [docs/MASTER_PROMPT.md](docs/MASTER_PROMPT.md). Runbook: [docs/RUNBOOK.md](docs/RUNBOOK.md).*
