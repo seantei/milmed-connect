@@ -1,48 +1,36 @@
-# Existing Open-Source PitchBook Clones — Integration Assessment
+# Existing Systems — What We Build On (and What We Don't Rebuild)
 
-Two real open-source PitchBook-style projects exist on GitHub. Here's what each does, what MilMed Connect PitchBook can borrow from them, and the honest verdict on integration.
+MILMED already runs two PitchBook-style systems on the iMac. This project is an **add-on** to them. Counts below are from a read-only check on 2026-10-11.
 
-## OpenPitch (github.com/Avierovich/openpitch) — MIT, ~10 stars, v0.1.3
+## AetherForge — the data foundation
+- **What:** a public-record intelligence graph for medtech/biotech: who is winning non-dilutive money and clearing regulatory milestones, every fact tied to its source.
+- **Stack:** Postgres 17 + pgvector (port 55432), Python FastAPI (`/search`, `/profile`, `/graph`, `/solicitations`, `/analyst/screen`), Next.js hub UI (port 3420), local Ollama models. No Docker.
+- **Data:** ~21,800 companies; ~102,000 awards (USAspending ~67,200, NIH RePORTER ~34,900, CDMRP 7, Grants.gov 42, SAM 15); ~80,700 FDA regulatory records; ~180,700 patents; ~40,700 SEC filings; ~2,750 alerts; ~700 program officers. Refreshed daily (last ingest 2026-10-11).
+- **Already solved:** provenance on every fact (source, first seen, last verified, confidence); deterministic entity resolution with a strong-ID veto and a 2,000-pair gold set (generated from shared-UEI / name-and-city evidence, not hand-labeled); USAspending de-duplication; LLM restricted to turning a question into a filter (it cannot invent awards); defense-health and solicitation lanes.
+- **Not there yet:** MTEC directory, members, tags or MTEC awards; company-level CDMRP history; a "seeking investment" signal; an MCP server; a dual-use score.
 
-**What it is:** An open, real-time intelligence layer for AI startups. Mines podcasts, news, and SEC EDGAR filings; extracts metrics with LLMs; reconciles conflicting sources into consensus ranges with confidence scores and contradiction flags; publishes daily via GitHub Actions. Ships an MCP server, a static dashboard, and an event feed. No API key needed — the data is committed to the repo as plain JSON.
+## Signal Registry — Helix's deep layer
+- **What:** deep, source-traced company profiles from eight public databases (USAspending, SBIR.gov, SEC EDGAR, NIH, NSF, openFDA, ClinicalTrials.gov, PatentsView) plus a separate context layer; the solicitation watcher; topic analyses; the ops dashboard (port 3010).
+- **Stack:** TypeScript/Node, SQLite.
+- **Data:** 40 deeply profiled companies, ~5,100 resolved facts, ~5,700 solicitations seen, 24 topic analyses, 7 DU-T2 assessments. Daily and weekly watcher runs via Helix (Telegram).
+- **Used by:** Helix on Telegram for company reports, lookalikes, discovery, DU-T2 and topic analyses.
 
-**What MilMed Connect PitchBook can borrow:**
+## DU-T2 — the deep assessment (Kirtly's framework)
+- 21 subsections across TECH, TEAM and TRAN; geometric-mean total; tiers from Defense-Aligned to Defense-Distant; gap analysis, defense TAM and a Bridge-to-Dual-Use roadmap; delivered as Word reports.
+- 7 assessments stored (4 draft, 3 unverified, none yet validated).
+- **Relationship to this project:** the add-on's pre-screen is a fast first pass across thousands of companies; DU-T2 stays the authoritative deep assessment for the shortlist.
 
-- **Confidence-scored, sourced figures** — every number carries its source, a confidence score, and a tracked history. This is the right trust model for dual-use discovery: Eric and Kirtly should see *why* a company scored 84, not just the number.
-- **Contradiction detection** — when sources disagree, surface a consensus range + flag, don't silently pick one. Already planned in our LLM scoring layer; OpenPitch proves the pattern works.
-- **MCP-native, zero-install design** — `uvx openpitch-mcp` works in any agent in under a minute. Our MCP server should follow the same ergonomics.
-- **Daily pipeline as git commits** — the repo *is* the database; freshness is visible in git history. We use cron on the iMac instead (data is local), but the audit-log idea transfers.
-- **Source adapters as one-file plugins** — each ingestion source (MTEC, SBIR, USAspending) should be one module with a common interface, exactly like OpenPitch's adapter pattern.
+## What the add-on reuses vs adds
+| Reuse as is | Add |
+|---|---|
+| AetherForge database, awards, FDA, patents, filings | MTEC directory, membership status, capability tags, "seeking investment" |
+| AetherForge entity resolution and gold set | Human-labeled MTEC-vs-existing match pairs |
+| Evidence/provenance model | Pre-screen score (rules-only, unknown-aware) aligned with DU-T2 |
+| AetherForge API and hub UI | Read-only add-on endpoints, a Screening view, a read-only MCP server |
+| Signal Registry DU-T2 and Helix | Shortlist hand-off to DU-T2 (human-triggered) |
 
-**What it does NOT give us:** military-medical data. Its universe is global AI startups — 140+ profiled. Zero overlap with MTEC, CDMRP, or TechLink. Its podcast/EDGAR pipeline is irrelevant to DoD funding sources.
+## Duplication to avoid
+A second company database, a second Postgres (16) or Redis, a competing "dual-use" number shown as if it were DU-T2, a third dashboard, and crawlers re-pulling APIs AetherForge already ingests.
 
-## OpenBook (github.com/iloveitaly/openbook) — MIT, ~65 stars
-
-**What it is:** An open-source database of venture capital *firms* and their investors, built on Dolt (git for databases). Scrapes firm websites, categorizes pages with LLMs, stores team members with contact info. Queryable via SQL. Focused on helping founders find the right VC to pitch.
-
-**What MilMed Connect PitchBook can borrow:**
-
-- **LLM-assisted web scraping** — converting raw HTML to simplified markdown, then extracting structured JSON with an LLM. This is a proven pattern for sites without APIs (relevant to CDMRP and TechLink scraping).
-- **Dolt as a database** — git-versioned data with branching and PRs for corrections. Interesting for the entity-resolution review queue: a human could review a borderline match as a Dolt PR.
-- **SQL-queryable public data** — the idea that the dataset itself should be open and queryable, not locked behind an app.
-
-**What it does NOT give us:** company or funding data. It's a directory of VC *firms*, not of startups or their awards. Zero overlap with our sources.
-
-## The verdict: borrow patterns, don't integrate code
-
-Neither repo contains data or code that maps to MTEC, SBIR, CDMRP, USAspending, or TechLink. Forking them would mean deleting most of what they are. The right move is **pattern adoption**:
-
-1. **Confidence + provenance on every score** (from OpenPitch) — add `confidence` and `sources` fields to the scores table.
-2. **One-file source adapters** (from OpenPitch) — each ingest module implements a common interface.
-3. **LLM-assisted scraping for no-API sources** (from OpenBook) — use for CDMRP and TechLink.
-4. **Contradiction flags** (from OpenPitch) — already in the LLM scoring prompt; keep it.
-
-## Optional: run OpenPitch alongside as a complement
-
-One legitimate option: add OpenPitch's MCP server as a *second* MCP server on the iMac, alongside MilMed Connect PitchBook's. Eric's agent could then query both — MilMed Connect PitchBook for dual-use medtech discovery, OpenPitch for the broader AI startup landscape. They don't conflict; they cover different universes. This is a one-line MCP config addition, not a code integration.
-
-## What to avoid
-
-- Do not fork OpenPitch or OpenBook into MilMed Connect PitchBook. Different data, different domain, different architecture (OpenPitch is GitHub-Actions-centric; we are iMac-local).
-- Do not copy their data files. OpenPitch's committed JSON is AI-startup claims; importing it would pollute the medtech database.
-- Do not adopt Dolt as the primary database. Postgres 16 is already the stack; Dolt adds operational complexity for no gain at our scale (13.5k orgs, not millions).
+## Outside open-source projects (unchanged verdict)
+OpenPitch and OpenBook (both MIT) cover AI startups and VC firms, not military-medical data. Borrow patterns only (confidence-scored figures, one-file source adapters, contradiction flags); do not fork or import their data.

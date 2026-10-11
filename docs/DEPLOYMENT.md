@@ -2,32 +2,28 @@
 
 ## Target machine: MILMED Connect iMac
 
-This project runs **locally on the MILMED Connect iMac** (macOS). No cloud hosting, no Docker, no containers. The database, API, dashboard, and MCP server live on that one machine. Eric and Kirtly own the data and the pipeline outright.
+This project is an **add-on to AetherForge and Signal Registry**, which already run **locally on the MILMED Connect iMac** (macOS). No cloud hosting, no Docker, no containers. The add-on lives on that same machine and reuses AetherForge's database, API and hub UI. Eric and Kirtly own the data and the pipeline outright.
 
 **Local-first with optional hosted AI.** The database stays local. Jev, Claude, or GPT scoring sends selected content to hosted providers. What leaves the machine is explicit and limited. Spending limits should be set on any hosted AI account.
 
-### Prerequisites (install directly, no containers)
+### Prerequisites (already installed on the iMac — reuse, do not reinstall)
 
-- **macOS** with Homebrew
-- **Postgres 16**: `brew install postgresql@16 && brew services start postgresql@16`
-- **Redis**: `brew install redis && brew services start redis`
-- **Python 3.12**: `brew install python@3.12` (use a venv: `python3.12 -m venv .venv && source .venv/bin/activate`)
-- **Node.js 20+**: `brew install node`
+- **Postgres 17 + pgvector**: AetherForge's existing cluster (launchd `com.milmedconnect.aetherforge-db`, port 55432). The add-on uses a new schema `milmed_addon` in the `aetherforge` database.
+- **No new Postgres 16 and no Redis** unless Phase 0/1 measures a real need and Eric/Kirtly approve it. Checkpoints live in Postgres tables.
+- **Python**: AetherForge's existing venv (`~/aetherforge/.venv`); **Node**: already present for the hub UIs.
 
-### First-time setup
+### First-time setup (Phase 1, after Phase 0 approval)
 
-1. Clone the repo: `git clone https://github.com/seantei/milmed-connect.git`
-2. Create the database: `createdb milmed`
-3. Apply schema: `psql milmed < normalize/schema.sql`
-4. Copy env template: `cp .env.example .env`
-5. Run the crawler: `python -m ingest.mtec` (checkpoints progress; safe to re-run)
-6. Start the API: `uvicorn api.main:app --reload`
-7. Start the dashboard: `cd dashboard && npm install && npm run dev`
+1. Snapshot the AetherForge database (existing backup job) before any migration.
+2. Apply the additive migration that creates `milmed_addon` (no changes to existing tables).
+3. Copy env template: `cp .env.example .env` (gitignored).
+4. Run the MTEC crawler (1 req/2s, identified User-Agent, checkpointed, resumable, suppression list enforced).
+5. Extend the existing AetherForge API with read-only add-on endpoints; add the Screening view to the existing hub UI.
 
 ### Daily operation
 
-- Nightly refresh via **cron** on the iMac with refresh budgets, overlap prevention, missed-run recovery, and log rotation. Define behavior when the iMac sleeps or restarts.
-- Dashboard available at `http://localhost:5173` (dev).
+- Add-on refresh scheduled with **launchd** alongside the existing AetherForge jobs, with refresh budgets, overlap prevention, missed-run recovery and log rotation. Defined behavior when the iMac sleeps or restarts.
+- Results appear in the existing AetherForge hub (port 3420); deep DU-T2 assessments stay in Signal Registry via Helix.
 - MCP server runs alongside the API (read-only for the demo).
 
 ## Credential contract
@@ -99,7 +95,7 @@ Jev (TypeSafe AI's System One decision model) handles high-volume, low-reasoning
 
 ## Value for MILMED Connect
 
-- A focused military-medical intelligence platform that can replace specific research workflows.
+- An add-on to AetherForge and Signal Registry that brings in MTEC and a dual-use pre-screen.
 - Answers cross-source questions in seconds that Eric and Kirtly currently research manually.
 - Data stays on the iMac. Optional hosted AI is explicit and limited.
 - MCP-native. MIT-licensed. No vendor lock-in.

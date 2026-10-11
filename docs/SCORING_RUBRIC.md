@@ -1,4 +1,15 @@
-# Dual-Use Scoring Rubric v2
+# Dual-Use Pre-Screen Rubric v2
+
+**This is a pre-screen, not DU-T2.** It ranks thousands of AetherForge companies quickly from public evidence so a shortlist can go to a full DU-T2 assessment (Kirtly's 21-subsection TECH/TEAM/TRAN framework in Signal Registry). It never replaces or overwrites a DU-T2 score, and both are labeled distinctly wherever shown.
+
+**Alignment with DU-T2 (to be approved by Kirtly in Phase 0, SCORING_AGREEMENT.md):**
+| Pre-screen component | Closest DU-T2 domain |
+|---|---|
+| Focus Area Fit, Capability Tags | TECH |
+| Readiness: military-experienced team | TEAM |
+| Dual-Use Signal, Readiness: TRL, seeking investment | TRAN |
+
+Where a company already has a validated DU-T2, the pre-screen displays it alongside and flags large disagreements for human review. Evidence comes from AetherForge facts (with their provenance) plus the add-on's MTEC records.
 
 **Shared schema for rules, Jev, and LLM.** Missing evidence = "unknown," never a low score or automatic contradiction.
 

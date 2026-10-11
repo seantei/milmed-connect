@@ -1,81 +1,76 @@
-# MilMed Connect PitchBook — Revised Build Plan
+# MilMed Connect PitchBook — Build Plan (add-on to AetherForge + Signal Registry)
 
-**12-week commitment: a validated core product that answers three approved demo queries with cited evidence.** TechLink, the relationship graph, and the proposal-language generator are a separately estimated extension after the core proves useful.
+**What this is:** an add-on to the systems already running on the MILMED Connect iMac, not a new platform.
+- **AetherForge** is the data foundation: Postgres 17 + pgvector, ~21,800 companies, ~102,000 awards, ~81,000 FDA records, ~181,000 patents, ~41,000 SEC filings, provenance on every fact, rules-based entity resolution, FastAPI + Next.js "hub" UI.
+- **Signal Registry** is Helix's deep layer: in-depth company profiles, the DU-T2 assessments, topic analyses, the solicitation watcher, and the ops dashboard.
 
-No Docker. Everything runs locally on the MILMED Connect iMac. Postgres 16 and Redis installed directly via Homebrew. API keys are optional for the core; AI scoring is an accelerator. Local-first with optional hosted AI — what leaves the machine is explicit and limited.
+**What the add-on adds:** (1) the MTEC organization directory, its capability tags, membership status and "seeking investment" flag, matched to AetherForge companies; (2) a rules-based dual-use *pre-screen* score across all AetherForge companies, aligned with DU-T2; (3) three approved demo queries answered with cited evidence; (4) a read-only MCP server over the existing API. Nothing is rebuilt from scratch.
+
+**Re-estimated commitment: about 7 weeks** for the validated core (was 12), because sources, storage, entity resolution, evidence model and UI already exist. TechLink, proposal-language generation and further graph work remain a separately estimated extension.
+
+## Hard constraints (unchanged)
+- No Docker, no containers. Local on the MILMED Connect iMac. Eric and Kirtly own everything.
+- Use AetherForge's existing Postgres 17 cluster (new schema `milmed_addon`). **No new Postgres 16 or Redis** unless a measured need is shown in Phase 0/1 and approved.
+- Evidence model: every claim links to source record, retrieval date and supporting evidence; missing evidence = "unknown"; composite computed deterministically in code with the 40% evidence-weight minimum.
+- Crawlers: 1 request / 2 seconds, bot identified in User-Agent, checkpointed and resumable.
+- Respect the MTEC contact-email suppression list (stored in the DB).
+- Rules-only path must always work; AI is optional and credential-gated (see DEPLOYMENT.md).
+- Additive only: the add-on never edits or deletes existing AetherForge or Signal Registry rows; it writes to its own schema/tables and reads the rest.
+- Human approval gates: the bot prepares drafts and PRs; Eric and Kirtly approve. Never invent approvals or labels.
+
+## What already exists (verified read-only, 2026-10-11)
+| Need | Already in place | Gap for the add-on |
+|---|---|---|
+| USAspending (contracts + grants split) | AetherForge, ~67,200 awards, refreshed daily | none |
+| SBIR/STTR | NIH RePORTER (HHS SBIR) + USAspending contract-side; Signal Registry SBIR connector. SBIR.gov API blocked (403/429) | official SBIR bulk downloads, if Phase 0 shows a coverage gap |
+| CDMRP | AetherForge W81XWH keyword lane via USAspending: only 7 CDMRP awards; no company-level CDMRP source | test DTIC/CDMRP access; demo 2 may need narrowing |
+| FDA, ClinicalTrials.gov | FDA ~80,700 records in AetherForge; CT.gov in Signal Registry | link CT.gov to AetherForge companies if demo 3 kept |
+| MTEC | Solicitations only (Signal Registry watcher, AetherForge solicitation feed). No directory, member, tag or MTEC-award ingest | **new: MTEC directory crawl + membership** |
+| "Seeking investment" | not present anywhere | **new: from MTEC profile filter** |
+| Entity resolution | AetherForge deterministic rules, strong-ID veto, 2,000-pair gold set generated from shared-UEI / name+city evidence (not hand-labeled) | **new: human-labeled MTEC-vs-existing pairs** |
+| API | AetherForge FastAPI: /search, /profile, /graph, /solicitations, /analyst/screen | add endpoints for pre-screen + MTEC fields |
+| MCP | none | **new: thin read-only MCP over the API** |
+| Dual-use scoring | DU-T2 (Kirtly's 21-subsection framework) in Signal Registry, 7 assessments, none yet validated | **new: pre-screen aligned to DU-T2** |
+| UI | AetherForge hub (port 3420), Signal Registry ops dashboard (3010) | add a Screening view; no new dashboard |
 
 ## Phase 0 — Foundations (week 1)
+- [ ] `docs/phase0/EXISTING_SYSTEMS.md`: inventory of AetherForge and Signal Registry (tables, counts, sources, refresh jobs, owners, how Eric and Kirtly use each), confirmed by Eric and Kirtly.
+- [ ] `SOURCE_FINDINGS.md`: MTEC directory (~13,499 orgs; directory ≠ members; membership separately sourced), SBIR bulk-download coverage vs what AetherForge already has, CDMRP access test, CT.gov linkage. Document limits honestly.
+- [ ] `SCHEMA_AND_EVIDENCE.md`: new `milmed_addon` tables (mtec_orgs, mtec_membership, mtec_tags, addon_matches, prescreen_scores, suppression_list) referencing AetherForge companies and its provenance columns.
+- [ ] `SCORING_AGREEMENT.md`: pre-screen rubric and its mapping to DU-T2 (TECH/TEAM/TRAN), approved by Kirtly. Pre-screen is labeled "pre-screen, not DU-T2".
+- [ ] `DEMO_QUESTIONS.md`: three queries with manually verified expected answers, one ambiguous match, one honest "insufficient evidence".
+- [ ] `LABELED_SETS/`: a 50-company pre-screen set, and **MTEC-vs-existing match pairs** (target ~100, hardest first) labeled by Eric/Kirtly. The existing 2,000-pair AetherForge gold set is reused for regression; it is not relabeled.
+- [ ] `HARDWARE.md`: uses existing Postgres 17 (port 55432), Python venv and Node already on the iMac; disk headroom; backup job coverage. No new Postgres 16/Redis.
+- [ ] `APPROVALS.md`: Eric and Kirtly sign-off lines, empty until they sign.
 
-**Goal:** Prove source access, define the schema and evidence model, agree on scoring with Eric and Kirtly, and create labeled test cases. API keys optional.
+**Stop rule:** before every later phase, re-read these files; if any artifact or approval is missing, stop and report.
 
-- [ ] Verify source access and document limitations:
-  - MTEC directory: ~13,499 organizations (not 13,506 members). Homepage advertises 800+ members. Directory entries ≠ members. Store membership as a separately sourced status.
-  - SBIR.gov API is under maintenance. Use official downloadable files (XLS/JSON/XML) as primary; API as fallback when available.
-  - USAspending: CFDA/Assistance Listing applies only to financial assistance (grants), not contracts. Split grants and contracts into separate ingestion paths.
-  - CDMRP: funding-history pages do not yield company-level award histories. Award search directs to DTIC Dimensions; public access has been unstable. Test and document usable fields before promising the second demo query.
-  - FDA and ClinicalTrials.gov: required for the wearables demo; add as sources or narrow that demo.
-- [ ] Check iMac hardware and supported software versions (Postgres 16, Redis, Python 3.12, Node 20+).
-- [ ] Define the evidence model: every factual claim links to its source record, retrieval date, and supporting evidence. Preserve original records and versioned scores.
-- [ ] Define the scoring rubric with Eric and Kirtly: focus-area weights (normalize to 100%), dual-use signal, readiness. Missing evidence = "unknown," not low quality or contradiction. One output schema across rules, Jev, and LLMs. Composite calculated deterministically in code using the rubric's 40% evidence-weight minimum.
-- [ ] Create labeled test cases with Eric and Kirtly: three approved demo questions with manually verified expected answers. Include an ambiguous company match and an honest "insufficient evidence" result.
-- [ ] Create the 50-company labeled set and 200-pair matching set for later calibration. Human approval required — do not let the bot fabricate labels.
-- [ ] Record approved outputs in named files (see docs/INSTRUCTIONS.md). These are mandatory inputs to later phases.
+## Phase 1 — MTEC into AetherForge (weeks 2–3)
+- [ ] MTEC directory crawler (1 req/2s, UA, checkpoints, dated snapshots) into `milmed_addon`; membership status stored separately; suppression list enforced.
+- [ ] Match MTEC orgs to AetherForge companies using AetherForge's ER rules; ambiguous pairs to a review queue with undo. Must pass the labeled MTEC pairs and not regress the existing gold set.
+- [ ] Read-only API endpoints for MTEC fields; replay creates no duplicates; backup restore of the add-on schema demonstrated.
+- **Done when:** MTEC ingested and matched, held-out pairs pass, evidence links shown, Eric and Kirtly see a useful result. Open a PR and stop.
 
-**Done when:** Source limitations documented, schema and evidence model defined, scoring agreed, demo questions approved with verified answers, labeled sets created and saved in named files.
+## Phase 2 — Pre-screen + demo queries (weeks 4–5)
+- [ ] Rules-only pre-screen over all matched companies, written to `prescreen_scores` with evidence ids; unknown-aware.
+- [ ] Fill source gaps the approved demos need (SBIR bulk files, CDMRP if viable, CT.gov linkage), deduplicated against existing awards (no double-counting).
+- [ ] Optional AI (Jev/LLM) evaluated only if an approved usable provider is enabled; else marked disabled.
+- [ ] Shortlist hand-off: top pre-screen companies can be sent to Helix for a full DU-T2 in Signal Registry (human-triggered).
+- **Done when:** rules-only path passes the labeled set; demos answer with citations. Open a PR and stop.
 
-## Phase 1 — Thin end-to-end (weeks 2–4)
-
-**Goal:** Two sources, conservative company matching, rule-based scoring, simple search. Show Eric and Kirtly a useful result here.
-
-- [ ] Install Postgres 16 and Redis directly via Homebrew. Create the `milmed` database and apply `normalize/schema.sql`.
-- [ ] MTEC crawler: all directory profiles into Postgres, dated snapshot, checkpointed and resumable. Rate-limit 1 req/2s, identify bot in User-Agent. Store membership status separately.
-- [ ] SBIR.gov DoD medical awards via official downloadable files (primary). API if available.
-- [ ] Conservative entity resolution: high auto-merge precision target with held-out evaluation set including difficult negative examples. Support undoing merges. Threshold agreed in Phase 0.
-- [ ] Rule-based scoring from tags and keywords. Missing evidence = "unknown."
-- [ ] Basic FastAPI: `/companies`, `/companies/{id}`, `/search`. Simple React search page.
-- [ ] Evidence links on every displayed claim: source record, retrieval date, supporting evidence.
-- [ ] Reliability: replaying ingestion creates no duplicates; interrupted runs resume; failed sources preserve the last good snapshot; reviewed merges survive refreshes; backup restoration demonstrated.
-- [ ] API key discovery wired as an explicit credential contract (see DEPLOYMENT.md). Optional for this phase.
-
-**Done when:** Two sources ingested, search returns results with evidence links, conservative matching passes the held-out set, backup restoration demonstrated, Eric and Kirtly see a useful result.
-
-## Phase 2 — Improve against feedback (weeks 5–8)
-
-**Goal:** Improve matching and ranking against Eric and Kirtly's feedback. Add the sources required by the chosen demo questions. Rules-only path must pass all core tests. AI scoring is optional.
-
-- [ ] Incorporate feedback from Phase 1 demo.
-- [ ] Add sources required by the approved demo questions (USAspending grants and contracts as separate paths, CDMRP if access is viable, FDA/ClinicalTrials.gov if the wearables demo is kept).
-- [ ] Deduplicate awards across sources before adding funding totals.
-- [ ] Rules-only path passes all core tests against the labeled set.
-- [ ] If an approved usable AI provider is enabled (Jev or LLM), benchmark it against the labeled set. Jev uses `TYPESAFE_API_KEY`. Otherwise mark the AI layer explicitly disabled. Do not add a second AI layer until the first is calibrated.
-- [ ] Cross-source matching with the same high-precision target and undo support.
-- [ ] Company profile pages with funding timelines and evidence links.
-
-**Done when:** Rules-only path passes all core tests. If an approved usable AI provider is enabled, its evaluation also meets the agreed criteria; otherwise it is explicitly marked disabled. Demo questions answer with cited evidence. No double-counting of awards.
-
-## Phase 3 — Platform and formal demo (weeks 9–12)
-
-**Goal:** MCP, reliable refreshes, alerts, operational testing, and the formal demo.
-
-- [ ] MCP server (FastMCP, read-only for the demo): `search_companies`, `score_company`, `get_funding_history`, `find_dual_use_matches`, `get_new_matches`, `get_solicitation_alerts`.
-- [ ] React dashboard: search, profiles, funding map, alerts, review queue.
-- [ ] Daily refresh via cron on the iMac with refresh budgets, overlap prevention, missed-run recovery, and log rotation. Behavior defined for when the iMac sleeps or restarts.
-- [ ] Email/Slack alerts for high-score companies. Suppression list respected.
-- [ ] Performance: dashboard and MCP return the same correct results and citations. Measure a proposed p95 target under five seconds on the actual iMac with a declared dataset and repeated runs. Precompute scores.
-- [ ] Bot prepares the formal demo (three approved queries, including an ambiguous match and an honest "insufficient evidence" result) and opens a PR. Eric and Kirtly approve usefulness — the bot does not declare the meeting delivered on their behalf.
-
-**Done when:** Bot has prepared the demo and opened the PR. Eric and Kirtly have reviewed and approved usefulness separately.
+## Phase 3 — Surface + formal demo (weeks 6–7)
+- [ ] Screening view inside the existing AetherForge hub (no new dashboard).
+- [ ] Read-only MCP server (`search_companies`, `score_company`, `get_funding_history`, `find_dual_use_matches`, `get_new_matches`, `get_solicitation_alerts`) over the same API; same results and citations as the UI.
+- [ ] Add-on refresh added to the existing launchd schedule, with overlap prevention and missed-run recovery; alerts respect the suppression list.
+- [ ] Prepare the formal demo and open a PR. Eric and Kirtly approve usefulness separately.
 
 ## Phase 4 — Extension (separately estimated)
-
-TechLink ingestion with company matching, relationship graph, proposal-language generator. Start only after the core product proves useful to Eric and Kirtly.
+TechLink, deeper relationship graph, proposal-language generator. Only after the core proves useful.
 
 ## Demo queries (to be approved in Phase 0)
-
-1. Companies with point-of-care diagnostics + hemorrhage control that have SBIR awards but no MTEC membership (membership status must be separately sourced).
-2. CDMRP-funded companies currently seeking investment (depends on viable CDMRP access).
-3. Dual-use wearables: operational medicine tags + civilian FDA clearance + active clinical trials (requires FDA and ClinicalTrials.gov sources, or narrow the demo).
+1. Point-of-care diagnostics + hemorrhage control companies with SBIR awards but no MTEC membership.
+2. CDMRP-funded companies currently seeking investment (only 7 CDMRP awards exist today; depends on Phase 0 CDMRP access test).
+3. Dual-use wearables: operational-medicine tags + FDA clearance + active clinical trials.
 
 ## Position
-
-"A focused military-medical intelligence platform that can replace specific research workflows." Not a complete PitchBook replacement, and not a fixed annual savings claim until the core is validated.
+"An add-on to MILMED's AetherForge and Signal Registry that brings in MTEC and a quick dual-use pre-screen, so you can ask focused military-medical questions across thousands of companies — with DU-T2 still the deep assessment." Not a PitchBook replacement; no savings claim until validated.
