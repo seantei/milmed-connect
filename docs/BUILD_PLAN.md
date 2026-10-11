@@ -1,55 +1,79 @@
-# MilMed Connect PitchBook — Build Plan — 12 Weeks to Demo
+# MilMed Connect PitchBook — Revised Build Plan
 
-**No Docker. Everything runs locally on the MILMED Connect iMac: Postgres 16 and Redis installed directly via Homebrew, Python venv for dependencies, npm for the frontend. API keys are discovered from existing storage on the machine (.env → shell profile → macOS Keychain) — no new keys created.**
+**12-week commitment: a validated core product that answers three approved demo queries with cited evidence.** TechLink, the relationship graph, and the proposal-language generator are a separately estimated extension after the core proves useful.
 
-## Week 1–2: Foundation
-- [ ] Install Postgres 16 and Redis directly (`brew install` + `brew services start` — no containers)
-- [ ] SQL schema: companies, awards, technologies, scores, sources
-- [ ] MTEC crawler (httpx + BS4), 13.5k profiles, nightly, checkpointed + resumable
-- [ ] SBIR.gov DoD medical pull via API
-- [ ] Basic FastAPI: /companies, /companies/{id}, /search
-- [ ] API key discovery wired in `api/config.py`: .env → shell env → Keychain, with source logging
+No Docker. Everything runs locally on the MILMED Connect iMac. Postgres 16 and Redis installed directly via Homebrew. API keys are optional for the core; AI scoring is an accelerator. Local-first with optional hosted AI — what leaves the machine is explicit and limited.
 
-## Week 3–4: Normalization + Scoring v0
-- [ ] cleanco + custom name normalization
-- [ ] Splink dedup within MTEC (intra-source)
-- [ ] Rule-based scoring from tags + keywords (no LLM, no Jev yet)
-- [ ] Seed dashboard: React search page, top-50 scored companies
+## Phase 0 — Foundations (week 1)
 
-## Week 5–6: Jev + LLM Layer
-- [ ] Jev scoring: rubric `score` questions per focus area, batched 7–10 per call
-- [ ] Jev `noul` for ER borderline queue and contradiction flags
-- [ ] Jev `choice` for source/tier routing
-- [ ] LLM scoring for evidence citations + plain-English summaries (what Jev can't do)
-- [ ] Graceful fallback: no JEV_API_KEY → rule-based scoring still works
-- [ ] Confidence calibration on 50 hand-labeled companies
+**Goal:** Prove source access, define the schema and evidence model, agree on scoring with Eric and Kirtly, and create labeled test cases. API keys optional.
 
-## Week 7–8: Cross-Source ER + More Ingestion
-- [ ] USAspending + CDMRP ingestion
-- [ ] Cross-source Splink (MTEC ↔ SBIR ↔ USAspending)
-- [ ] Company profile pages: funding timeline, awards, technologies
-- [ ] Review queue UI for borderline matches
+- [ ] Verify source access and document limitations:
+  - MTEC directory: ~13,499 organizations (not 13,506 members). Homepage advertises 800+ members. Directory entries ≠ members. Store membership as a separately sourced status.
+  - SBIR.gov API is under maintenance. Use official downloadable files (XLS/JSON/XML) as primary; API as fallback when available.
+  - USAspending: CFDA/Assistance Listing applies only to financial assistance (grants), not contracts. Split grants and contracts into separate ingestion paths.
+  - CDMRP: funding-history pages do not yield company-level award histories. Award search directs to DTIC Dimensions; public access has been unstable. Test and document usable fields before promising the second demo query.
+  - FDA and ClinicalTrials.gov: required for the wearables demo; add as sources or narrow that demo.
+- [ ] Check iMac hardware and supported software versions (Postgres 16, Redis, Python 3.12, Node 20+).
+- [ ] Define the evidence model: every factual claim links to its source record, retrieval date, and supporting evidence. Preserve original records and versioned scores.
+- [ ] Define the scoring rubric with Eric and Kirtly: focus-area weights (normalize to 100%), dual-use signal, readiness. Missing evidence = "unknown," not low quality or contradiction. One output schema across rules, Jev, and LLMs.
+- [ ] Create labeled test cases with Eric and Kirtly: three approved demo questions with manually verified expected answers. Include an ambiguous company match and an honest "insufficient evidence" result.
+- [ ] Create the 50-company labeled set and 200-pair matching set for later calibration. Human approval required — do not let the bot fabricate labels.
 
-## Week 9–10: Platform
-- [ ] MCP server (FastMCP): search_companies, score_company,
-  get_funding_history, find_dual_use_matches tools
-- [ ] Alerts: new high-score companies, new MTEC solicitations
-- [ ] Daily refresh via **cron on the iMac** (not GitHub Actions — data is local)
-- [ ] Email/Slack alerts for new matches
+**Done when:** Source limitations documented, schema and evidence model defined, scoring agreed, demo questions approved with verified answers, labeled sets created.
 
-## Week 11–12: Polish + Demo
-- [ ] TechLink ingestion
-- [ ] Relationship graph view (companies ↔ PIs ↔ programs)
-- [ ] Demo script for MILMED Connect: 3 queries they actually run
-- [ ] One-pager + architecture diagram for the pitch
+## Phase 1 — Thin end-to-end (weeks 2–4)
 
-## Demo queries for MILMED Connect
+**Goal:** Two sources, conservative company matching, rule-based scoring, simple search. Show Eric and Kirtly a useful result here.
 
-1. "Show me all companies with point-of-care diagnostics + hemorrhage
-   control that have SBIR awards but no MTEC membership."
-2. "Which CDMRP-funded companies are currently seeking investment?"
-3. "Find dual-use wearables: military operational medicine tags + civilian
-   FDA clearance + active clinical trials."
+- [ ] Install Postgres 16 and Redis directly via Homebrew. Create the `milmed` database and apply `normalize/schema.sql`.
+- [ ] MTEC crawler: all directory profiles into Postgres, dated snapshot, checkpointed and resumable. Rate-limit 1 req/2s, identify bot in User-Agent. Store membership status separately.
+- [ ] SBIR.gov DoD medical awards via official downloadable files (primary). API if available.
+- [ ] Conservative entity resolution: high auto-merge precision target with held-out evaluation set including difficult negative examples. Support undoing merges. Resolve threshold conflicts (document the chosen threshold).
+- [ ] Rule-based scoring from tags and keywords. Missing evidence = "unknown."
+- [ ] Basic FastAPI: `/companies`, `/companies/{id}`, `/search`. Simple React search page.
+- [ ] Evidence links on every displayed claim: source record, retrieval date, supporting evidence.
+- [ ] Reliability: replaying ingestion creates no duplicates; interrupted runs resume; failed sources preserve the last good snapshot; reviewed merges survive refreshes; backup restoration demonstrated.
+- [ ] API key discovery wired as an explicit credential contract (see DEPLOYMENT.md). Optional for this phase.
 
-These three queries are things Eric and Kirtly do manually across 5+ sites.
-If the platform answers them in seconds, the demo sells itself.
+**Done when:** Two sources ingested, search returns results with evidence links, conservative matching passes the held-out set, backup restoration demonstrated, Eric and Kirtly see a useful result.
+
+## Phase 2 — Improve against feedback (weeks 5–8)
+
+**Goal:** Improve matching and ranking against Eric and Kirtly's feedback. Add the sources required by the chosen demo questions. Add one AI scoring provider first.
+
+- [ ] Incorporate feedback from Phase 1 demo.
+- [ ] Add sources required by the approved demo questions (USAspending grants and contracts as separate paths, CDMRP if access is viable, FDA/ClinicalTrials.gov if the wearables demo is kept).
+- [ ] Deduplicate awards across sources before adding funding totals.
+- [ ] Benchmark one AI scoring provider (Jev or LLM) against the labeled set before adding a second. Jev uses `TYPESAFE_API_KEY` per official SDK.
+- [ ] Cross-source matching with the same high-precision target and undo support.
+- [ ] Company profile pages with funding timelines and evidence links.
+
+**Done when:** Demo questions answer with cited evidence, matching improved against feedback, one AI layer calibrated, no double-counting of awards.
+
+## Phase 3 — Platform and formal demo (weeks 9–12)
+
+**Goal:** MCP, reliable refreshes, alerts, operational testing, and the formal demo.
+
+- [ ] MCP server (FastMCP, read-only for the demo): `search_companies`, `score_company`, `get_funding_history`, `find_dual_use_matches`, `get_new_matches`, `get_solicitation_alerts`.
+- [ ] React dashboard: search, profiles, funding map, alerts, review queue.
+- [ ] Daily refresh via cron on the iMac with refresh budgets, overlap prevention, missed-run recovery, and log rotation. Behavior defined for when the iMac sleeps or restarts.
+- [ ] Email/Slack alerts for high-score companies. Suppression list respected.
+- [ ] Performance: dashboard and MCP return the same correct results and citations. Measure a proposed p95 target under five seconds on the actual iMac with a declared dataset and repeated runs. Precompute scores.
+- [ ] Formal demo with Eric and Kirtly: three approved queries, including an ambiguous match and an honest "insufficient evidence" result.
+
+**Done when:** Formal demo delivered, MCP and dashboard return matching cited results, refreshes reliable, p95 measured on the iMac.
+
+## Phase 4 — Extension (separately estimated)
+
+TechLink ingestion with company matching, relationship graph, proposal-language generator. Start only after the core product proves useful to Eric and Kirtly.
+
+## Demo queries (to be approved in Phase 0)
+
+1. Companies with point-of-care diagnostics + hemorrhage control that have SBIR awards but no MTEC membership (membership status must be separately sourced).
+2. CDMRP-funded companies currently seeking investment (depends on viable CDMRP access).
+3. Dual-use wearables: operational medicine tags + civilian FDA clearance + active clinical trials (requires FDA and ClinicalTrials.gov sources, or narrow the demo).
+
+## Position
+
+"A focused military-medical intelligence platform that can replace specific research workflows." Not a complete PitchBook replacement, and not a fixed annual savings claim until the core is validated.
