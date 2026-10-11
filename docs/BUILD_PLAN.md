@@ -1,4 +1,4 @@
-# Build Plan — 12 Weeks to Demo
+# MilMed Connect PitchBook — Build Plan — 12 Weeks to Demo
 
 **No Docker. Everything runs locally on the MILMED Connect iMac: Postgres 16 and Redis installed directly via Homebrew, Python venv for dependencies, npm for the frontend. API keys are discovered from existing storage on the machine (.env → shell profile → macOS Keychain) — no new keys created.**
 
