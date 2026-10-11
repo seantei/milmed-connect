@@ -1,154 +1,155 @@
-# MilMed Connect PitchBook — Step-by-Step Instructions
+# MilMed Connect PitchBook — Revised Step-by-Step Instructions
 
-Everything you need, in order. Each step says **when** to do it, **where** to do it, and **exactly what to paste**.
+Everything you need, in order. Each step says **when** to do it, **where** to do it, and **exactly what to paste**. Incorporates Astra's feedback: Phase 0 first, corrected data assumptions, stronger acceptance criteria, explicit credential contract.
 
 ---
 
-## STEP 0 — API key check (on the iMac, before anything else)
+## STEP 0 — Foundations (on the iMac and with Eric and Kirtly, before any bot session)
 
-**When:** Before starting any bot session. Takes two minutes.
+**When:** Before starting any bot session. Week 1.
 
-**Where:** Terminal on the MILMED Connect iMac.
+**Where:** Terminal on the MILMED Connect iMac, plus a conversation with Eric and Kirtly.
 
-**What to run:**
+**What to do:**
 
+1. Clone the repo:
 ```bash
 cd ~
 git clone https://github.com/seantei/milmed-connect.git
 cd milmed-connect
 ```
 
-Then run the inline script from `docs/API_KEY_CHECK.md` (the Python block under "How to run"). It prints which source supplies each key — `.env`, shell profile, Keychain, or CLI config — without ever showing values, and tells you which Phase 2 layers can start immediately.
+2. Check iMac hardware and software versions (Postgres 16, Redis, Python 3.12, Node 20+).
 
-**Result:** You know whether Phase 2 starts with the LLM layer, Jev, both, or rule-based only.
+3. Verify source access and document limitations:
+   - MTEC directory lists ~13,499 organizations; homepage advertises 800+ members. Directory ≠ members. Store membership as a separately sourced status.
+   - SBIR.gov API is under maintenance. Use official downloadable files as primary.
+   - USAspending CFDA filter applies only to grants, not contracts. Split paths.
+   - CDMRP directs to DTIC Dimensions; public access has been unstable. Test before promising the second demo query.
+   - FDA and ClinicalTrials.gov needed for the wearables demo, or narrow it.
+
+4. Agree on scoring with Eric and Kirtly. Normalize focus weights to 100%. Missing evidence = "unknown."
+
+5. Approve three demo questions with manually verified expected answers. Include an ambiguous company match and an honest "insufficient evidence" result.
+
+6. Create the 50-company labeled set and 200-pair matching set. Human approval required.
+
+7. Run the key-discovery check from docs/API_KEY_CHECK.md (optional at this stage). Use the explicit credential contract: named provider, approved account, exact env var or project-specific Keychain item, redacted status. Separate "configured," "authenticated," and "usable."
+
+**Done when:** Source limitations documented, scoring agreed, demo questions approved with verified answers, labeled sets created.
 
 ---
 
-## STEP 1 — Phase 1 (fresh Grok bot session)
+## STEP 1 — Phase 1: thin end-to-end (fresh Grok bot session)
 
 **When:** After Step 0.
 
 **Where:** Open a new Grok bot session. Paste this as the opening prompt:
 
 ```
-Build Phase 1 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect. This runs locally on the MILMED Connect iMac — no Docker, no containers, no compose files. Postgres 16 and Redis install directly via Homebrew, Python 3.12 in a venv, Node 20+ for the frontend. Follow the README architecture exactly: ingest, normalize, score, api, mcp, dashboard folders.
+Build Phase 1 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect. This runs locally on the MILMED Connect iMac — no Docker, no containers. Postgres 16 and Redis install directly via Homebrew, Python 3.12 in a venv, Node 20+ for the frontend. Follow the README architecture exactly: ingest, normalize, score, api, mcp, dashboard folders.
 
-Build the MTEC crawler first — httpx and BeautifulSoup4, pulling all 13,506 profiles into Postgres. Rate-limit at one request per two seconds, identify the bot in the User-Agent, and checkpoint progress so a crash doesn't restart from page one. Then pull SBIR.gov DoD medical awards via the official API. Add the SQL schema from docs, Splink dedup within MTEC, and rule-based scoring from tags and keywords — no LLM, no Jev. Expose a basic FastAPI with /companies, /companies/{id}, and /search endpoints.
+Thin end-to-end only. Two sources: MTEC directory (all profiles, dated snapshot, checkpointed, resumable, rate-limit 1 req/2s, identify bot in User-Agent) and SBIR.gov DoD medical awards via official downloadable files (primary; API if available). Store MTEC membership as a separately sourced status — directory entries are not members.
 
-Wire up API key discovery in api/config.py: check the project .env first, then shell profile exports, then macOS Keychain via the security command. Log which source supplied each key — never the value itself. Fail loudly naming the missing key and where to put it. Use whatever keys already exist on the iMac; create none.
+Conservative entity resolution: high auto-merge precision target with held-out evaluation set including difficult negative examples. Support undoing merges. Document the chosen threshold.
 
-When Phase 1 runs end to end, open a pull request and stop.
+Rule-based scoring from tags and keywords only. Missing evidence = "unknown," not low quality or contradiction. One output schema. Evidence links on every displayed claim: source record, retrieval date, supporting evidence.
+
+Basic FastAPI with /companies, /companies/{id}, /search. Simple React search page.
+
+Reliability requirements: replaying ingestion creates no duplicates; interrupted runs resume; failed sources preserve the last good snapshot; reviewed merges survive refreshes; demonstrate backup restoration.
+
+API key discovery: explicit credential contract — named provider, approved account, exact env var or project-specific Keychain item. Separate configured/authenticated/usable. Optional for this phase. Do not recursively scan unrelated CLI config or execute shell profiles. Missing optional credentials disable that feature; core continues.
+
+When Phase 1 runs end to end and passes the reliability gates, open a pull request and stop.
 ```
 
-**Done when:** PR opened, all 13.5k MTEC profiles in Postgres, SBIR awards pulled, search API responding.
+**Done when:** Two sources ingested, search returns results with evidence links, conservative matching passes the held-out set, backup restoration demonstrated. Show Eric and Kirtly a useful result.
 
 **Then:** Review the PR, merge it, and only then start Step 2.
 
 ---
 
-## STEP 2 — Phase 2 (new Grok bot session)
+## STEP 2 — Phase 2: improve against feedback (new Grok bot session)
 
-**When:** After Phase 1's PR merges.
+**When:** After Phase 1's PR merges and Eric and Kirtly have given feedback.
 
 **Where:** Open a new Grok bot session. Paste this as the opening prompt:
 
 ```
-Build Phase 2 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 1 branch. No Docker — everything stays local on the MILMED iMac with the existing Postgres and Redis. API keys continue to be discovered from existing machine storage (.env → shell profile → macOS Keychain) via api/config.py.
+Build Phase 2 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 1 branch. No Docker. Local on the iMac. Incorporate feedback from the Phase 1 demo with Eric and Kirtly.
 
-First, verify the API key discovery from api/config.py works: run it and log which source supplies each key without printing values. If an Anthropic or OpenAI key is found, the LLM scoring layer activates; if not, rule-based scoring continues and the LLM layer waits.
+Add the sources required by the approved demo questions: USAspending grants and contracts as separate ingestion paths (CFDA applies only to grants); CDMRP only if access is viable; FDA and ClinicalTrials.gov if the wearables demo is kept. Deduplicate awards across sources before adding funding totals.
 
-Then add the Jev layer in score/jev_score.py using the official TypeSafe Python SDK. Jev handles the high-volume decisions: rubric score questions for each MTEC focus area batched 7–10 per call, noul questions for the entity-resolution borderline queue and contradiction flags, and choice questions for source routing. If no JEV_API_KEY is found, degrade gracefully to rule-based scoring — Jev is an accelerator, not a dependency.
+Improve matching against their feedback. Same high-precision target and undo support as Phase 1.
 
-Add the LLM scoring layer in score/llm_score.py using the prompt from docs/LLM_SCORING_PROMPT.md: evidence citations, plain-English summaries, and contradiction flags for what Jev can't reason about. Calibrate both layers against the 50 hand-labeled companies in docs, tracking precision and recall.
+Add one AI scoring provider first. Benchmark it against the labeled set before adding a second. If Jev: use TYPESAFE_API_KEY per official SDK. If LLM: evidence citations and plain-English summaries. Missing evidence stays "unknown." No contradiction flag without affirmative conflicting evidence.
 
-Then ingest USAspending DoD medical contracts via the bulk-download API filtered to CFDA 12.420, and scrape CDMRP funding-history pages. Run cross-source Splink matching across MTEC, SBIR, and USAspending, and build company profile pages with funding timelines.
+Company profile pages with funding timelines and evidence links.
 
-When Phase 2 is complete, open a pull request and stop.
+When Phase 2 is complete and the demo questions answer with cited evidence, open a pull request and stop.
 ```
 
-**Done when:** PR opened, both scoring layers calibrated, cross-source matches visible.
+**Done when:** Demo questions answer with cited evidence, matching improved, one AI layer calibrated, no double-counting of awards.
 
 **Then:** Review the PR, merge it, and only then start Step 3.
 
 ---
 
-## STEP 3 — Phase 3 (new Grok bot session)
+## STEP 3 — Phase 3: platform and formal demo (new Grok bot session)
 
 **When:** After Phase 2's PR merges.
 
 **Where:** Open a new Grok bot session. Paste this as the opening prompt:
 
 ```
-Build Phase 3 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 2 branch. No Docker — everything stays local on the MILMED Connect iMac with the existing Postgres and Redis. API keys continue to be discovered from existing machine storage (.env → shell profile → macOS Keychain) via api/config.py.
+Build Phase 3 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 2 branch. No Docker. Local on the iMac.
 
-Build the MCP server (mcp/, FastMCP) with six tools: search_companies, score_company, get_funding_history, find_dual_use_matches, get_new_matches, get_solicitation_alerts. Test each against the three demo queries in docs/BUILD_PLAN.md.
+MCP server (FastMCP, read-only for the demo) with six tools: search_companies, score_company, get_funding_history, find_dual_use_matches, get_new_matches, get_solicitation_alerts. Dashboard and MCP must return the same correct results and citations.
 
-Build the React dashboard (dashboard/, React 18 + Vite + Tailwind + Recharts): search page with focus-area and capability-tag filters plus a dual-use score slider; company profile pages; funding map; alerts panel; entity-resolution review queue.
+React dashboard: search, profiles, funding map, alerts, review queue.
 
-Daily refresh via cron on the iMac (not GitHub Actions): 0 2 * * * cd /path/to/milmed-connect && .venv/bin/python -m ingest.run_all >> logs/ingest.log 2>&1. ingest.run_all re-crawls MTEC (content-hash change detection), pulls new SBIR/USAspending records, re-scores only what changed, and logs a summary.
+Daily refresh via cron on the iMac with refresh budgets, overlap prevention, missed-run recovery, and log rotation. Define behavior when the iMac sleeps or restarts.
 
-Email (SMTP) and optional Slack alerts for companies scoring above 80. Suppression list respected.
+Email/Slack alerts for high-score companies. Suppression list respected.
 
-Acceptance test: all three demo queries answer in under five seconds through both the dashboard and the MCP server.
+Performance: measure a proposed p95 target under five seconds on the actual iMac with a declared dataset and repeated runs. Precompute scores.
 
-When Phase 3 is complete, open a pull request and stop.
+Formal demo with Eric and Kirtly: three approved queries, including an ambiguous match and an honest "insufficient evidence" result.
+
+When Phase 3 is complete and the formal demo is delivered, open a pull request and stop.
 ```
 
-**Done when:** PR opened, all three demo queries under five seconds through both dashboard and MCP.
+**Done when:** Formal demo delivered, MCP and dashboard return matching cited results, refreshes reliable, p95 measured.
 
-**Then:** Review the PR, merge it, and only then start Step 4.
+**Then:** Review the PR, merge it. Phase 4 is a separately estimated extension.
 
 ---
 
-## STEP 4 — Phase 4 (new Grok bot session)
+## STEP 4 — Phase 4: extension (separately estimated)
 
-**When:** After Phase 3's PR merges.
+**When:** Only after the core product proves useful to Eric and Kirtly.
 
-**Where:** Open a new Grok bot session. Paste this as the opening prompt:
+**Where:** New Grok bot session. Paste this:
 
 ```
-Build Phase 4 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 3 branch. No Docker — everything stays local on the MILMED Connect iMac with the existing Postgres and Redis. API keys continue to be discovered from existing machine storage (.env → shell profile → macOS Keychain) via api/config.py.
+Build Phase 4 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 3 branch. No Docker. Local on the iMac.
 
-TechLink ingestion (ingest/techlink.py): keyword scrape of ~1,945 medical technologies across 100+ DoD/VA labs. No API — same rate-limiting and checkpointing as MTEC. Match technologies to companies (inventor-founded, licensing-contact matches) using Jev noul questions. Surface as a "Lab-origin technologies" section on profiles.
+This is an extension after the core product has proven useful. TechLink ingestion with company matching (Jev noul for borderline matches), relationship graph (NetworkX, interactive dashboard view, shortest-path query), and proposal-language generator (LLM layer, human-review disclaimer, version history).
 
-Relationship graph (graph/, NetworkX): node types are companies, DoD PIs, labs, programs, awards. Edges connect them. Dashboard view with react-force-graph or D3. Killer query: shortest path from a company to a combat casualty care PI at USAMRDC.
-
-Proposal-language generator (proposals/): given a company profile and an MTEC solicitation, draft the technical approach, military relevance, dual-use, and team sections using the LLM layer. Include a human-review disclaimer and version history in the DB.
-
-Performance pass: indexes on focus_area, dual_use_score, seeking_investment. CSV and PDF exports. pg_dump backup cron alongside the ingest cron.
+Performance pass, CSV/PDF exports, backup cron.
 
 When Phase 4 is complete, open a pull request and stop.
 ```
 
-**Done when:** PR opened, TechLink matches surfaced, graph view renders, proposal drafts reviewable.
-
-**Then:** Review the PR, merge it, and move to Step 5.
-
 ---
 
-## STEP 5 — Demo (with Eric and Kirtly)
+## Position for Eric and Kirtly
 
-**When:** After Phase 4 merges.
-
-**Where:** On the iMac, with Eric and Kirtly present.
-
-**What to show:**
-
-1. The three demo queries from docs/BUILD_PLAN.md — run each live through the dashboard and the MCP server.
-2. The one-pager at docs/ONE_PAGER.md as the leave-behind.
-3. The relationship graph — the shortest-path query from a company to a USAMRDC PI.
-
-**The pitch:** This replaces $20k+/year of PitchBook for military-medical coverage, runs locally on their iMac, and answers cross-source questions in seconds that they currently research manually across five-plus sites.
-
----
-
-## Alternative: one session, all phases
-
-If you'd rather not open five sessions, paste the contents of `docs/MASTER_PROMPT.md` as the opening prompt of a single Grok bot session. It contains every phase and tells the bot to open a PR and stop after each one — same sequence, one conversation.
+"A focused military-medical intelligence platform that can replace specific research workflows." Not a complete PitchBook replacement, and not a fixed annual savings claim until the core is validated.
 
 ## Notes
 
-- Every phase prompt is also saved as its own file in the repo: docs/PHASE3_PROMPT.md, docs/PHASE4_PROMPT.md, docs/API_KEY_CHECK.md.
-- If a phase's PR has review comments, address them in the same bot session before moving on.
+- Every phase prompt is also saved in the repo.
 - The API key check (Step 0) is the only step that runs on the iMac directly rather than through the bot.
-- The GitHub repo URL stays github.com/seantei/milmed-connect; the project name is MilMed Connect PitchBook.
+- Local-first with optional hosted AI. What leaves the machine is explicit and limited.
