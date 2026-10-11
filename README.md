@@ -1,6 +1,6 @@
 # MILMED Connect
 
-**A PitchBook-style intelligence platform for dual-use medical technology — built entirely on public DoD sources.**
+**A PitchBook-style intelligence platform for dual-use medical technology — built entirely on public DoD sources, installed locally on the MILMED Connect iMac.**
 
 MILMED Connect aggregates, scores, and surfaces dual-use medtech companies across the fragmented landscape of military medical funding: MTEC, SBIR/STTR, CDMRP, USAspending, TechLink, DIU, and more. Think PitchBook, but for the military medical innovation ecosystem — free, open-source, self-hostable, and MCP-native so AI agents can query it directly.
 
@@ -10,6 +10,7 @@ MILMED Connect aggregates, scores, and surfaces dual-use medtech companies acros
 - **The data is public but scattered.** MTEC's directory alone has 13,506 organizations. CDMRP has funded 22,456 awards totaling ~$19.7B. TechLink lists ~7,000 DoD/VA lab technologies (1,945 medical). No one has unified them.
 - **Dual-use discovery is a needle-in-a-haystack problem.** A company doing AI triage or wearable sensors might appear in three sources and be invisible in the rest.
 - **The moat is scoring + relationships, not scraping.** Anyone can build the list. The value is in rating dual-use fit and connecting companies to the right DoD investigators and PIs.
+- **Deployment target: the MILMED Connect iMac.** Local-first, no Docker, no cloud. Eric and Kirtly own the data and the pipeline outright. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for install steps and API key handling.
 
 ## Architecture
 
@@ -18,7 +19,8 @@ MILMED Connect aggregates, scores, and surfaces dual-use medtech companies acros
 │   ├── mtec.py        # MTEC member directory (13.5k profiles, paginated, filterable)
 │   ├── sbir.py        # SBIR.gov API + bulk downloads
 │   ├── usaspending.py  # USAspending.gov bulk download API
-│   └── cdmrp.py        # CDMRP funding history (scraped; no public API)
+│   ├── cdmrp.py        # CDMRP funding history (scraped; no public API)
+│   └── techlink.py     # TechLink marketplace (keyword scrape; no API)
 ├── normalize/       # Entity resolution & schema unification
 │   ├── schema.sql      # Unified company/award/technology schema
 │   ├── resolve.py      # Splink-based probabilistic matching across sources
@@ -26,8 +28,10 @@ MILMED Connect aggregates, scores, and surfaces dual-use medtech companies acros
 ├── score/           # Dual-use scoring engine
 │   ├── rubric.yaml     # MTEC focus-area weights + capability tags
 │   ├── llm_score.py    # LLM-based dual-use fit scoring with confidence
+│   ├── jev_score.py    # Jev decision model for fast rubric scoring (Phase 2)
 │   └── signals.py      # Civilian traction, FDA status, seeking-investment flags
 ├── api/             # FastAPI service
+│   └── config.py       # API key discovery: .env → shell env → macOS Keychain
 ├── mcp/             # MCP server for AI agent access
 └── dashboard/       # React search UI (company profiles, funding maps, alerts)
 ```
@@ -115,17 +119,30 @@ Return JSON: {focus_area_scores: {...}, dual_use: N, regulatory: N,
 team: N, evidence: [...], flags: [...]}
 ```
 
+## Jev integration (Phase 2)
+
+Jev (TypeSafe AI's System One decision model) handles high-volume, low-reasoning decisions; the LLM handles low-volume, high-reasoning ones. Jev decides; the LLM explains; code acts.
+
+- **Rubric scoring at scale**: Jev `score` questions per focus area across 13.5k+ profiles — 70–500 ms, $0.042/M input tokens, output free. Batch 7–10 questions per call.
+- **Entity-resolution borderline queue**: Jev `noul` — "same company?" — probability returned; only 0.7–0.9 matches reach human review.
+- **Contradiction flags**: Jev `noul` — claims FDA clearance without a 510(k) in evidence?
+- **Routing**: Jev `choice` — which source or scoring tier handles each record.
+- **Graceful fallback**: no Jev key → rule-based keyword/tag scoring. Jev is an accelerator, not a dependency.
+- Official SDKs and agent skill: github.com/typesafe-ai. Docs: docs.typesafe.ai.
+
 ## Build phases
 
 ### Phase 1 — MVP (weeks 1–4)
-- [ ] MTEC crawler: all 13.5k profiles → Postgres
+- [ ] MTEC crawler: all 13.5k profiles → Postgres (checkpointed, resumable)
 - [ ] SBIR.gov DoD medical awards → Postgres
 - [ ] Basic schema + Splink dedup
 - [ ] Rule-based scoring (no LLM yet) — keyword + tag matching
 - [ ] Simple search API (FastAPI)
+- [ ] API key discovery wired: .env → shell env → macOS Keychain
 
 ### Phase 2 — Intelligence (weeks 5–8)
-- [ ] LLM scoring layer with confidence + evidence citations
+- [ ] Jev scoring layer (rubric scores, ER borderline queue, contradiction flags)
+- [ ] LLM scoring layer with confidence + evidence citations (for what Jev can't do)
 - [ ] USAspending + CDMRP ingestion
 - [ ] Entity resolution across all sources
 - [ ] Company profile pages with funding timeline
@@ -133,7 +150,7 @@ team: N, evidence: [...], flags: [...]}
 ### Phase 3 — Platform (weeks 9–12)
 - [ ] React dashboard: search, filters, funding maps, alerts
 - [ ] MCP server for AI agent queries
-- [ ] Daily refresh pipeline (GitHub Actions)
+- [ ] Daily refresh via cron on the iMac
 - [ ] Email/Slack alerts for new matches
 
 ### Phase 4 — Differentiation
@@ -147,10 +164,10 @@ team: N, evidence: [...], flags: [...]}
 - **Backend:** Python 3.12, FastAPI, Postgres 16, Redis
 - **Ingestion:** httpx + BeautifulSoup4 (MTEC), official APIs (SBIR, USAspending)
 - **ER:** Splink + cleanco + eridu embeddings
-- **Scoring:** LLM (Claude/GPT) with structured output + rubric YAML
+- **Scoring:** Jev (fast rubric decisions) + LLM (evidence, citations, reasoning)
 - **Frontend:** React 18 + Vite, Tailwind, Recharts
 - **MCP:** FastMCP server exposing search/score/alert tools
-- **Infra:** Local-first — Postgres and Redis installed directly on the machine (no Docker, no containers). GitHub Actions for daily refresh runs.
+- **Infra:** Local-first on the MILMED iMac — Postgres and Redis installed directly via Homebrew (no Docker, no containers). Daily refresh via cron. API keys discovered from existing machine storage.
 
 ## Legal / ethics notes
 
@@ -165,4 +182,4 @@ MIT. Data sourced from public U.S. government sources.
 
 ---
 
-*Built to show MILMED Connect (Beaverton, OR) what a unified dual-use medtech discovery layer could look like.*
+*Built to show MILMED Connect (Beaverton, OR) what a unified dual-use medtech discovery layer could look like. Full deployment guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). One-pager: [docs/ONE_PAGER.md](docs/ONE_PAGER.md). Build plan: [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md).*
