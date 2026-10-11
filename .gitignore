@@ -1,0 +1,32 @@
+# gitignore
+
+# Secrets — never commit
+.env
+*.pem
+*.key
+secrets/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+dashboard/dist/
+.DS_Store
+
+# Data & logs (local to the iMac)
+data/
+logs/
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
