@@ -1,7 +1,9 @@
 # Build Plan — 12 Weeks to Demo
 
+**No Docker. Everything runs locally: Postgres 16 and Redis installed directly on the machine, Python venv for dependencies, npm for the frontend.**
+
 ## Week 1–2: Foundation
-- [ ] Docker Compose: Postgres 16 + Redis
+- [ ] Install Postgres 16 and Redis directly (brew/apt/yum — no containers)
 - [ ] SQL schema: companies, awards, technologies, scores, sources
 - [ ] MTEC crawler (httpx + BS4), 13.5k profiles, nightly
 - [ ] SBIR.gov DoD medical pull via API
@@ -29,7 +31,7 @@
 - [ ] MCP server (FastMCP): search_companies, score_company,
   get_funding_history, find_dual_use_matches tools
 - [ ] Alerts: new high-score companies, new MTEC solicitations
-- [ ] Daily GitHub Action pipeline
+- [ ] Daily refresh via cron or GitHub Actions
 
 ## Week 11–12: Polish + Demo
 - [ ] TechLink ingestion

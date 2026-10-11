@@ -18,8 +18,7 @@ MILMED Connect aggregates, scores, and surfaces dual-use medtech companies acros
 │   ├── mtec.py        # MTEC member directory (13.5k profiles, paginated, filterable)
 │   ├── sbir.py        # SBIR.gov API + bulk downloads
 │   ├── usaspending.py  # USAspending.gov bulk download API
-│   ├── cdmrp.py        # CDMRP funding history (scraped; no public API)
-│   └── techlink.py     # TechLink marketplace (keyword scrape; no API)
+│   └── cdmrp.py        # CDMRP funding history (scraped; no public API)
 ├── normalize/       # Entity resolution & schema unification
 │   ├── schema.sql      # Unified company/award/technology schema
 │   ├── resolve.py      # Splink-based probabilistic matching across sources
@@ -151,7 +150,7 @@ team: N, evidence: [...], flags: [...]}
 - **Scoring:** LLM (Claude/GPT) with structured output + rubric YAML
 - **Frontend:** React 18 + Vite, Tailwind, Recharts
 - **MCP:** FastMCP server exposing search/score/alert tools
-- **Infra:** Docker Compose locally; GitHub Actions for daily runs
+- **Infra:** Local-first — Postgres and Redis installed directly on the machine (no Docker, no containers). GitHub Actions for daily refresh runs.
 
 ## Legal / ethics notes
 
