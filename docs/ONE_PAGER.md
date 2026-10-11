@@ -2,37 +2,29 @@
 
 ## The problem
 
-Dual-use medtech discovery is fragmented across five-plus public sources that nobody has unified:
-
-- **MTEC** — 13,506 member organizations, searchable directory
-- **SBIR/STTR** — every DoD award since program inception
-- **CDMRP** — 22,456 awards, ~$19.7B, no public database
-- **USAspending** — DoD medical contracts (CFDA 12.420)
-- **TechLink** — ~1,945 medical technologies from 100+ DoD/VA labs
-
-A company doing AI triage or wearable sensors might appear in three of these and be invisible in the rest. PitchBook covers this space poorly and costs $20k+/year. MILMED Connect's founders answer these questions manually, across sites, every day.
+Dual-use medtech discovery is fragmented across multiple public sources. MILMED Connect's founders currently research companies manually across MTEC, SBIR, USAspending, and related sites. A company can appear in one source and be invisible in another.
 
 ## The solution
 
-**MilMed Connect PitchBook** — a PitchBook-style intelligence platform for dual-use medical technology, built entirely on public DoD sources. Free, open-source, self-hostable, MCP-native.
+**MilMed Connect PitchBook** — a focused military-medical intelligence platform that can replace specific research workflows. Built on public DoD sources, local-first on the MILMED Connect iMac, MIT-licensed, MCP-native.
 
-- **One search layer** over all sources, with entity resolution merging the same company across MTEC, SBIR, and USAspending into a single profile.
-- **Dual-use scoring engine** rating every company on MTEC focus-area fit (combat casualty care, operational medicine, infectious diseases, etc.), civilian traction, FDA status, and team readiness — with cited evidence and contradiction flags.
-- **AI-queryable** via MCP server: ask "which hemorrhage-control companies have SBIR awards but no MTEC membership?" and get an answer in seconds.
+- One search layer over validated sources, with conservative entity resolution and evidence links on every claim.
+- Dual-use scoring with an explicit "unknown" state when evidence is missing. Optional AI acceleration (Jev or LLM) when keys are available and usable.
+- Answers cross-source questions that currently require manual research, with cited evidence.
 
-## Why now
+## Positioning
 
-- All source data is public and scrapable today — no partnerships or licenses required.
-- TechLink is shipping an AI search layer late 2026; being first with dual-use scoring on top of raw data is a window.
-- MILMED Connect's network of DoD investigators and PIs turns a list into funded projects — the platform amplifies that, it doesn't replace it.
+"A focused military-medical intelligence platform that can replace specific research workflows." Not a complete PitchBook replacement, and not a fixed annual savings claim until the core is validated with Eric and Kirtly.
 
 ## What it is not
 
-Not a replacement for MILMED Connect's relationships or judgment. The moat is scoring + relationships. The platform gets you the list; the phone call still comes from the person.
+Not a replacement for MILMED Connect's relationships or judgment. The platform surfaces candidates and evidence; the phone call still comes from the person.
 
 ## The ask
 
-A working demo answering three real queries MILMED Connect runs manually. Twelve-week build, local-first (no Docker), MIT-licensed, repo at github.com/seantei/milmed-connect.
+Phase 0: agree on three demo questions with manually verified expected answers (including an ambiguous match and an honest "insufficient evidence" result), then build the thin end-to-end product. Twelve-week commitment for the validated core. Extension features are separately estimated.
+
+Repo: github.com/seantei/milmed-connect
 
 ---
 
