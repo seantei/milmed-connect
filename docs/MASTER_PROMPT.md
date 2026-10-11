@@ -1,10 +1,10 @@
-# Master Prompt — All Phases, One Session
+# MilMed Connect PitchBook — Master Prompt — All Phases, One Session
 
 Paste this as the opening prompt of a single Grok bot session. It contains everything the bot needs: the repo, the architecture, the no-Docker constraint, the iMac deployment target, the API key discovery rules, and all four phases with their acceptance criteria. The bot should execute phases sequentially, opening a PR after each phase and stopping for review before starting the next.
 
 ---
 
-Build milmed-connect end to end from the repo at github.com/seantei/milmed-connect. This is a PitchBook-style dual-use medtech intelligence platform for MILMED Connect (Beaverton, OR) — a two-person firm that helps medtech and biotech companies win non-dilutive DoD funding through MTEC.
+Build MilMed Connect PitchBook end to end from the repo at github.com/seantei/milmed-connect. This is a PitchBook-style dual-use medtech intelligence platform for MILMED Connect (Beaverton, OR) — a two-person firm that helps medtech and biotech companies win non-dilutive DoD funding through MTEC.
 
 ## Hard constraints (apply to every phase)
 
