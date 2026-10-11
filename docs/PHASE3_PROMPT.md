@@ -1,6 +1,6 @@
-# Phase 3 Prompt — Platform Layer
+# MilMed Connect PitchBook — Phase 3 Prompt — Platform Layer
 
-Build Phase 3 of milmed-connect from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 2 branch. No Docker — everything stays local on the MILMED Connect iMac with the existing Postgres and Redis. API keys continue to be discovered from existing machine storage (.env → shell profile → macOS Keychain) via api/config.py.
+Build Phase 3 of MilMed Connect PitchBook from the repo at github.com/seantei/milmed-connect, continuing from the merged Phase 2 branch. No Docker — everything stays local on the MILMED Connect iMac with the existing Postgres and Redis. API keys continue to be discovered from existing machine storage (.env → shell profile → macOS Keychain) via api/config.py.
 
 ## Goals
 
